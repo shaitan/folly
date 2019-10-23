@@ -78,6 +78,7 @@ EventBase::EventBase(bool enableTimeMeasurement)
     : runOnceCallbacks_(nullptr),
       stop_(false),
       loopThread_(),
+      tmp_queue_(nullptr),
       queue_(nullptr),
       fnRunner_(nullptr),
       maxLatency_(0),
@@ -125,6 +126,7 @@ EventBase::EventBase(event_base* evb, bool enableTimeMeasurement)
       stop_(false),
       loopThread_(),
       evb_(evb),
+      tmp_queue_(nullptr),
       queue_(nullptr),
       fnRunner_(nullptr),
       maxLatency_(0),
@@ -185,6 +187,8 @@ EventBase::~EventBase() {
     LOG(ERROR) << "~EventBase(): Unable to drain notification queue";
   }
 
+  std::this_thread::sleep_for(std::chrono::seconds{2});
+
   // Stop consumer before deleting NotificationQueue
   fnRunner_->stopConsuming();
   {
@@ -197,6 +201,7 @@ EventBase::~EventBase() {
   }
 
   VLOG(5) << "EventBase(): Destroyed.";
+  queue_.swap(tmp_queue_);
 }
 
 size_t EventBase::getNotificationQueueSize() const {

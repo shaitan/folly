@@ -867,6 +867,7 @@ class EventBase : public TimeoutManager,
 
   // A notification queue for runInEventBaseThread() to use
   // to send function requests to the EventBase thread.
+  std::unique_ptr<NotificationQueue<Func>> tmp_queue_;
   std::unique_ptr<NotificationQueue<Func>> queue_;
   std::unique_ptr<FunctionRunner> fnRunner_;
   ssize_t loopKeepAliveCount_{0};

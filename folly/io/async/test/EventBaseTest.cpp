@@ -2190,3 +2190,24 @@ TEST_F(EventBaseTest, RunOnDestructionAddCallbackWithinCallback) {
   }
   EXPECT_EQ(2, callbacksCalled);
 }
+
+TEST_F(EventBaseTest, Race) {
+  // Create EventBase
+  auto base = new EventBase();
+
+  // Run destructor in a separate thread
+  auto t = std::thread([base]() {
+    delete base;
+  });
+
+  // wait until ~EventBase hangs on its sleep
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  // put more messages with Futures attached to EventBase into its NotificationQueue
+  folly::Promise<folly::Unit> promise;
+  promise.getFuture().via(base).then([](folly::Try<folly::Unit> &&){});
+  folly::makeFuture().via(base).then([p=std::move(promise)](folly::Try<folly::Unit> &&){});
+
+  // join thread
+  t.join();
+}
